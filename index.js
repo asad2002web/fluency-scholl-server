@@ -13,14 +13,14 @@ app.use(express.json());
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
-    return res.status(401).send({ error: true, message: "Access Denai" });
+    return res.stutus(401).send({ error: true, message: "Access Denai" });
   }
   // bearer token
   const token = authorization.split(" ")[1];
 
   jwt.verify(token, process.env.ACCESS_TOKEN_KEY, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ error: true, message: "Access Denai" });
+      return res.stutus(401).send({ error: true, message: "Access Denai" });
     }
     req.decoded = decoded;
     next();
@@ -76,8 +76,6 @@ async function run() {
       res.send(result);
     });
 
- 
-
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -90,7 +88,7 @@ async function run() {
       } else if (role === "instructor") {
         updatedRole = "instructor";
       } else {
-        return res.status(400).json({ error: "Invalid role" });
+        return res.stutus(400).json({ error: "Invalid role" });
       }
 
       const filter = { _id: new ObjectId(id) };
@@ -104,48 +102,73 @@ async function run() {
         const result = await usersCollection.updateOne(filter, updateDoc);
         res.json(result);
       } catch (error) {
-        res.status(500).json({ error: "Failed to update user role" });
+        res.stutus(500).json({ error: "Failed to update user role" });
       }
     });
 
-
-    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-          res.send({ admin: false })
+        res.send({ admin: false });
       }
-      const query = { email: email }
+      const query = { email: email };
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin' }
-      res.send(result);
-  }
-  )
-// instructor api
-app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
-  const email = req.params.email;
-  if (req.decoded.email !== email) {
-      res.send({ instructor: false })
-  }
-  const query = { email: email }
-  const user = await usersCollection.findOne(query);
-  const result = { instructor: user?.role === 'instructor' }
-  res.send(result);
-}
-)
-    // Added Classes API
-     app.get("/addedClass", verifyJWT, async (req, res) => {
-      const result = await AddClassCollection.find().toArray();
+      const result = { admin: user?.role === "admin" };
       res.send(result);
     });
-     app.get("/addedClass/:email", async (req, res) => {
+    // instructor api
+    app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const query = { email: email }
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false });
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === "instructor" };
+      res.send(result);
+    });
+    // All Classes API
+    app.post("/addclass", async (req, res) => {
+      const addClass = req.body;
+      const result = await AddClassCollection.insertOne(addClass);
+      res.send(result);
+    });
+    // my class
+    app.get("/myclass/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
       const result = await AddClassCollection.find(query).toArray();
       res.send(result);
     });
-     app.post("/addedClass", async (req, res) => {
-      const addClass = req.body;
-      const result = await AddClassCollection.insertOne(addClass);
+    app.delete("/myclass/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+      const result = await AddClassCollection.deleteOne(query);
+      res.send(result);
+    });
+    // all class 
+    app.get("/allclass", async (req, res) => {
+      const result = await AddClassCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/allclass/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await AddClassCollection.find(query).toArray();
+      res.send(result);
+    });
+    //  approved
+    app.patch("/allclass/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const { feedback, stutus } = req.body;
+
+      const updateDoc = { $set: { feedback } };
+      if (stutus) {
+        updateDoc.$set.stutus = stutus;
+      }
+      const result = await AddClassCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
