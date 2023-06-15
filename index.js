@@ -158,6 +158,13 @@ async function run() {
       const result = await AddClassCollection.find(query).toArray();
       res.send(result);
     });
+      // instructors
+      app.get('/instructors', async (req, res) => {
+        const quary = { role: 'instructor' };
+        const result = await usersCollection.find(quary).toArray()
+        res.send(result)
+    })
+
     //  approved
     app.patch("/allclass/:id", async (req, res) => {
       const id = req.params.id;
