@@ -76,17 +76,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users/admin/:email', async (req, res) => {
-      const email = req.params.email;
-      // if (req.decoded.email !== email) {
-      //     res.send({ admin: false })
-      // }
-      const query = { email: email }
-      const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin' }
-      res.send(result);
-  }
-  )
+ 
 
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
@@ -117,8 +107,33 @@ async function run() {
         res.status(500).json({ error: "Failed to update user role" });
       }
     });
+
+
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+          res.send({ admin: false })
+      }
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
+  }
+  )
+// instructor api
+app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+  const email = req.params.email;
+  if (req.decoded.email !== email) {
+      res.send({ instructor: false })
+  }
+  const query = { email: email }
+  const user = await usersCollection.findOne(query);
+  const result = { instructor: user?.role === 'instructor' }
+  res.send(result);
+}
+)
     // Added Classes API
-     app.get("/addedClass", async (req, res) => {
+     app.get("/addedClass", verifyJWT, async (req, res) => {
       const result = await AddClassCollection.find().toArray();
       res.send(result);
     });
