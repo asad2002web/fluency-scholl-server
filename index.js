@@ -53,6 +53,7 @@ async function run() {
     const SelectedCollection = client
       .db("fluencyDB")
       .collection("selectedClass");
+    const paymentCollection = client.db("fluencyDB").collection("payment");
 
     // jwt api
     app.post("/jwt", (req, res) => {
@@ -235,6 +236,58 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
+
+    // payment related api
+
+    app.patch("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+
+      // Insert payment document only if it doesn't exist
+      const query = { className: payment.className };
+      const existingPayment = await paymentCollection.findOne(query);
+    console.log(existingPayment)
+      if (!existingPayment) {
+        const insertedResult = await paymentCollection.insertOne(payment);
+
+        // Update the class document in paymentCollection
+        const filter = { className: payment.className };
+        const updateDoc = {
+          $inc: {
+            availableSeat: -1,
+            enrolledStuNum: 1,
+          },
+        };
+
+        const updatePaymentResult = await paymentCollection.updateOne(
+          filter,
+          updateDoc,
+          { upsert: false }
+        );
+
+        // Update the class document in classCollection
+        const updateClassResult = await AddClassCollection.updateOne(
+          filter,
+          updateDoc,
+          { upsert: false }
+        );
+
+        res.send({ insertedResult, updatePaymentResult, updateClassResult });
+      } else {
+        // delete from selected classes //
+        const deletedSelected = await SelectedCollection.deleteOne(query);
+
+        res.send({ message: "Payment document already exists" });
+      }
+    });
+
+    // pyment history 
+    app.get("/payment/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
