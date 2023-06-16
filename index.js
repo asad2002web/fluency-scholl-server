@@ -183,7 +183,7 @@ async function run() {
       res.send(result);
     });
     //  select class
-    app.post("/select", async (req, res) => {
+    app.post("/select", verifyJWT, async (req, res) => {
       const selectedClass = req.body;
 
       const existingClass = await SelectedCollection.findOne(selectedClass);
@@ -195,26 +195,26 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/select", async (req, res) => {
+    app.get("/select", verifyJWT, async (req, res) => {
       const result = await SelectedCollection.find().toArray();
       res.send(result);
     });
 
-    app.get("/select/:user", async (req, res) => {
+    app.get("/select/:user", verifyJWT, async (req, res) => {
       const user = req.params.user;
       const query = { user: user };
       const result = await SelectedCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.get("/selected/:id", async (req, res) => {
+    app.get("/selected/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await SelectedCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.delete("/select/:id", async (req, res) => {
+    app.delete("/select/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
@@ -223,7 +223,7 @@ async function run() {
     });
 
     // create payment intent
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent",verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
