@@ -49,6 +49,7 @@ async function run() {
 
     const usersCollection = client.db("fluencyDB").collection("users");
     const AddClassCollection = client.db("fluencyDB").collection("addClass");
+    const SelectedCollection = client.db("fluencyDB").collection("selectedClass");
 
     // jwt api
     app.post("/jwt", (req, res) => {
@@ -147,7 +148,7 @@ async function run() {
       const result = await AddClassCollection.deleteOne(query);
       res.send(result);
     });
-    // all class 
+    // all class
     app.get("/allclass", async (req, res) => {
       const result = await AddClassCollection.find().toArray();
       res.send(result);
@@ -158,12 +159,12 @@ async function run() {
       const result = await AddClassCollection.find(query).toArray();
       res.send(result);
     });
-      // instructors
-      app.get('/instructors', async (req, res) => {
-        const quary = { role: 'instructor' };
-        const result = await usersCollection.find(quary).toArray()
-        res.send(result)
-    })
+    // instructors
+    app.get("/instructors", async (req, res) => {
+      const quary = { role: "instructor" };
+      const result = await usersCollection.find(quary).toArray();
+      res.send(result);
+    });
 
     //  approved
     app.patch("/allclass/:id", async (req, res) => {
@@ -178,7 +179,21 @@ async function run() {
       const result = await AddClassCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+    //  select class
+    app.post("/select", async (req, res) => {
+      const selectedClass = req.body;
 
+      const existingClass = await SelectedCollection.findOne(selectedClass);
+      if (existingClass) {
+        res.status(400).send("Selected class already exists");
+        return;
+      }
+      const result = await SelectedCollection.insertOne(selectedClass);
+      res.send(result);
+    });
+
+    
+ git 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
