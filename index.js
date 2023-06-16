@@ -49,7 +49,9 @@ async function run() {
 
     const usersCollection = client.db("fluencyDB").collection("users");
     const AddClassCollection = client.db("fluencyDB").collection("addClass");
-    const SelectedCollection = client.db("fluencyDB").collection("selectedClass");
+    const SelectedCollection = client
+      .db("fluencyDB")
+      .collection("selectedClass");
 
     // jwt api
     app.post("/jwt", (req, res) => {
@@ -192,8 +194,26 @@ async function run() {
       res.send(result);
     });
 
-    
- git 
+    app.get("/select", async (req, res) => {
+      const result = await SelectedCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/select/:user", async (req, res) => {
+      const user = req.params.user;
+      const query = { user: user };
+      const result = await SelectedCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/select/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+      const result = await SelectedCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
