@@ -3,12 +3,13 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_KEY);
 const port = process.env.PORT || 4000;
 
 // middleware
 app.use(cors());
 app.use(express.json());
-
+// TODO: JWT Apply
 // jwt verify function
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -145,7 +146,6 @@ async function run() {
     });
     app.delete("/myclass/:id", async (req, res) => {
       const id = req.params.id;
-
       const query = { _id: new ObjectId(id) };
       const result = await AddClassCollection.deleteOne(query);
       res.send(result);
@@ -206,12 +206,34 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/selected/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await SelectedCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.delete("/select/:id", async (req, res) => {
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
       const result = await SelectedCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // create payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
     // Send a ping to confirm a successful connection
